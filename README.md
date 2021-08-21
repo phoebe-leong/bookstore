@@ -30,4 +30,4 @@ In both programs during most text input, they can enter 'e', which serves as a b
 They both communicate to an SQL database, created by the Book Management Program if it does not exist.  
 For reasons I need not express, I will advise users to not delete it.  
 
-These programs are not perfect, please create an issue if you find any bugs, or feel the need to suggest any improvements.
+These programs are not perfect, please create an issue if you find any bugs or feel the need to suggest any improvements.
