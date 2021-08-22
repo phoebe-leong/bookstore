@@ -11,8 +11,8 @@ struct bookinfo {
 sqlite3* db;
 sqlite3_stmt* statement;
 std::vector<bookinfo> bought;
-size_t identifier;
-size_t budget; /* Just in case Bill Gates wants to set his bank account to be his budget */
+uint_max_t identifier;
+uint_max_t budget; /* Just in case Bill Gates wants to set his bank account to be his budget */
 int menu();
 
 void signup();
