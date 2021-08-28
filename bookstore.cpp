@@ -38,7 +38,7 @@ class login {
         getline(std::cin, password);
         if (password == "e") {
             sqlite3_close(db);
-            return ; 
+            return ;
         }
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@password"), password.c_str(), password.size(), SQLITE_STATIC);
 
@@ -73,14 +73,14 @@ class login {
     void usernamelogin() {
         system("clear");
         std::string username;
- 
+
         sqlite3_prepare_v2(db, "select * from owners where username=@username", -1, &statement, NULL);
 
         std::cout << "Enter your username:\n";
         getline(std::cin, username);
-        if (username == "e") { 
+        if (username == "e") {
             sqlite3_close(db);
-            return ; 
+            return ;
         }
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
 
@@ -96,7 +96,7 @@ class login {
             sqlite3_clear_bindings(statement);
             passwordlogin(username);
         }
-    }   
+    }
 };
 
 void a() {
@@ -167,7 +167,7 @@ void r() {
         }
         sqlite3_reset(statement);
         sqlite3_clear_bindings(statement);
-    
+
         sqlite3_prepare_v2(db, "delete from books where name=@name", -1, &statement, NULL);
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@name"), name.c_str(), name.size(), SQLITE_STATIC);
         sqlite3_step(statement);
@@ -375,7 +375,7 @@ void ao() {
                 if (islower(assignedrole[0]) == 0) {
                     assignedrole[0] = toupper(assignedrole[0]);
                 }
-                
+
             }
             sqlite3_prepare_v2(db, "insert into owners values(@username, @password, @role)", -1, &statement, NULL);
             sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
@@ -438,7 +438,7 @@ void rao() {
     std::cin >> yn;
 
     if (yn == "y") {
-        sqlite3_exec(db, "delete from owners", 0, NULL, NULL);
+        sqlite3_exec(db, "drop table owners", 0, NULL, NULL);
 
         std::cout << "All owner accounts removed!\nPress enter to exit the program\n";
         std::cin.ignore();
@@ -515,6 +515,7 @@ int menu() {
 }
 
 int main() {
+
     sqlite3_open("bookstore.db", &db);
     system("clear");
 
@@ -556,31 +557,6 @@ int main() {
 
             login l;
             l.usernamelogin();
-        } else {
-            system("clear");
-            sqlite3_reset(statement);
-
-            std::string username;
-            std::string password;
-
-            sqlite3_prepare_v2(db, "insert into owners values(@username, @password, \"Manager\")", -1, &statement, NULL);
-
-            std::cout << "Press enter to create a manager account\n";
-            std::cin.get();
-            std::cout << "Enter a username:\n";
-            getline(std::cin, username);
-            std::cout << "Enter a password:\n";
-            getline(std::cin, password);
-
-            sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
-            sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@password"), password.c_str(), password.size(), SQLITE_STATIC);
-            sqlite3_step(statement);
-            sqlite3_reset(statement);
-
-            role = "Manager";
-            std::cout << "Account created!\nPress enter to continue\n";
-            std::cin.get();
-            menu();
         }
     }
 }
