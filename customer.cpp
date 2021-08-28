@@ -11,7 +11,7 @@ struct bookinfo {
 sqlite3* db;
 sqlite3_stmt* statement;
 std::vector<bookinfo> bought;
-uintmax_t identifier;
+uintmax_t identifier; /* Who knows how many users a singular system may have at any given time? */
 uintmax_t budget; /* Just in case Bill Gates wants to set his bank account to be his budget */
 int menu();
 
@@ -27,8 +27,8 @@ class login {
 
         std::cout << "Enter your password or type 's' to sign up:\n";
         getline(std::cin, password);
-        if (password == "e") { 
-            sqlite3_close(db); 
+        if (password == "e") {
+            sqlite3_close(db);
             return ;
         } else if (password  == "s") {
             sqlite3_reset(statement);
@@ -82,7 +82,7 @@ class login {
                 std::cin.ignore();
                 std::cin.get();
 
-                sqlite3_close(db); 
+                sqlite3_close(db);
                 return ;
             }
 
@@ -98,16 +98,16 @@ class login {
     void usernamelogin(bool stdignore = true) {
         system("clear");
         std::string username;
- 
+
         sqlite3_prepare_v2(db, "select * from users where username=@username", -1, &statement, NULL);
 
         std::cout << "Enter your username or type 's' to sign up:\n";
         if (stdignore) { std::cin.ignore(); } /* Works fine on first time but ignores first character once function is repeated, creating false negatives */
         getline(std::cin, username);
-        if (username == "e") { 
-            sqlite3_close(db); 
-            return ; 
-        } else if (username == "s") { 
+        if (username == "e") {
+            sqlite3_close(db);
+            return ;
+        } else if (username == "s") {
             sqlite3_reset(statement);
             sqlite3_clear_bindings(statement);
 
@@ -129,7 +129,7 @@ class login {
             sqlite3_clear_bindings(statement);
             passwordlogin(username);
         }
-    }   
+    }
 };
 
 void signup() {
@@ -137,7 +137,7 @@ void signup() {
 
     std::string username;
     std::string password;
-    
+
     int identifier_signup;
     int limiter = 999;
     int tries = 1;
@@ -145,7 +145,7 @@ void signup() {
     std::cout << "Enter a username:\n";
     std::cin.ignore();
     getline(std::cin, username);
-    if (username == "e") { sqlite3_close(db); return ; } 
+    if (username == "e") { sqlite3_close(db); return ; }
     std::cout << "Enter a password:\n";
     getline(std::cin, password);
     if (password == "e") { sqlite3_close(db); return ; }
@@ -207,7 +207,7 @@ void signup() {
         std::cin.ignore();
         std::cin.get();
 
-        sqlite3_close(db); 
+        sqlite3_close(db);
         return ;
     }
 
