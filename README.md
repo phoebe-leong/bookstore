@@ -17,7 +17,7 @@ Any role inputted during this process that is not either 'Manager' or 'Employee'
 
 ### Bookstore Customer Program
 With this piece of software, users can buy books from the store.  
-At the start of the program, they are prompted to either sign up or log in with a preexisting account.  
+At the start of the program, they are prompted to either sign up or log in with a pre-existing account.  
 This is so that the user can view their full buying history if they desire.  
 
 Each user is given a randomly generated identification code on sign up.  
