@@ -26,7 +26,7 @@ The code is used as a differentiator to everyone else's buying history, as they 
 Users can buy books, view every book available, view their sessions's buying history, and view their full history if need be.  
 
 ### Similarities and links between the two
-In both programs during most text input, they can enter 'e', which serves as a back button within the program.  
+In both programs during most text input, users can enter 'e', which serves as a back button within the program.  
 They both communicate to an SQL database, created by the Book Management Program if it does not exist.  
 For reasons I need not express, I will advise users to not delete it.  
 
