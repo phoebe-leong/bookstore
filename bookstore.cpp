@@ -1,23 +1,15 @@
 #include <iostream>
-#include <string>
 #include <sqlite3.h>
 
-bool isnum(std::string string) {
-    int amountofnumbers = 0;
-    char numbers[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+#if defined(__unix) || defined(__unix__) || defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+    #include <termios.h>
+#endif
 
+bool isnum(std::string string) {
     for (int i = 0; i < string.size(); i++) {
-        for (int j = 0; j < sizeof(numbers) / sizeof(numbers[0]); j++) {
-            if (string[i] == numbers[j]) {
-                amountofnumbers++;
-                break;
-            }
-        }
+        if (!(string[i] >= '0' && string[i] <= '9')) return false;
     }
-    if (amountofnumbers == string.size()) {
-        return true;
-    }
-    return false;
+    return true;
 }
 
 sqlite3* db;
@@ -34,8 +26,16 @@ class login {
         sqlite3_prepare_v2(db, "select * from owners where username=@username and password=@password", -1, &statement, NULL);
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
 
+        termios def;
+        tcgetattr(0, &def);
+        termios n = def;
+        n.c_lflag &= (~ECHO);
+
         std::cout << "Enter your password:\n";
+        tcsetattr(0, TCSANOW, &n);
         getline(std::cin, password);
+        tcsetattr(0, TCSANOW, &def);
+
         if (password == "e") {
             sqlite3_close(db);
             return ;
@@ -343,7 +343,16 @@ void ao() {
     } else {
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
         std::cout << "Enter a password:\n";
+
+        termios def;
+        tcgetattr(0, &def);
+        termios n = def;
+        n.c_lflag &= (~ECHO);
+
+        tcsetattr(0, TCSANOW, &n);
         getline(std::cin, password);
+        tcsetattr(0, TCSANOW, &def);
+
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@password"), password.c_str(), password.size(), SQLITE_STATIC);
 
         if (sqlite3_step(statement) == SQLITE_ROW) {
@@ -515,8 +524,12 @@ int menu() {
 }
 
 int main() {
+    #if !(__has_include(<termios.h>))
+        std::cout << "Your Operating System is not compatible with this Software\n";
+        return -1;
+    #endif
 
-    sqlite3_open("bookstore.db", &db);
+    sqlite3_open(".bookstore.db", &db);
     system("clear");
 
     if (sqlite3_exec(db, "select count(*) from books", 0, NULL, NULL) != SQLITE_OK && strcmp(sqlite3_errmsg(db), "no such table: books") == 0) {
@@ -538,7 +551,15 @@ int main() {
         std::cout << "Enter a username:\n";
         getline(std::cin, username);
         std::cout << "Enter a password:\n";
+
+        termios def;
+        tcgetattr(0, &def);
+        termios n = def;
+        n.c_lflag &= (~ECHO);
+
+        tcsetattr(0, TCSANOW, &n);
         getline(std::cin, password);
+        tcsetattr(0, TCSANOW, &def);
 
         sqlite3_prepare_v2(db, "insert into owners values(@username, @password, \"Manager\")", -1, &statement, NULL);
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
