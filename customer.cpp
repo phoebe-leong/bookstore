@@ -3,10 +3,21 @@
 #include <string>
 #include <vector>
 
+#if defined(__unix) || defined(__unix__) || defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+    #include <termios.h>
+#endif
+
 struct bookinfo {
     std::string name;
     int price;
 };
+
+bool isnum(std::string string) {
+    for (int i = 0; i < string.size(); i++) {
+        if (!(string[i] >= '0' && string[i] <= '9')) return false;
+    }
+    return true;
+}
 
 sqlite3* db;
 sqlite3_stmt* statement;
@@ -25,8 +36,16 @@ class login {
         sqlite3_prepare_v2(db, "select * from users where username=@username and password=@password", -1, &statement, NULL);
         sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
 
+        termios def;
+        tcgetattr(0, &def);
+        termios n = def;
+        n.c_lflag &= (~ECHO);
+
         std::cout << "Enter your password or type 's' to sign up:\n";
+
+        tcsetattr(0, TCSANOW, &n);
         getline(std::cin, password);
+        tcsetattr(0, TCSANOW, &def);
         if (password == "e") {
             sqlite3_close(db);
             return ;
@@ -36,57 +55,47 @@ class login {
 
             system("clear");
             signup();
-        }
-
-        sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@password"), password.c_str(), password.size(), SQLITE_STATIC);
-
-        if (sqlite3_step(statement) != SQLITE_ROW) {
-            failedattempts++;
-
-            if (failedattempts == 3) {
-                std::cout << "Max amount of login attempts reached!\nPress enter to exit the program\n";
-                std::cin.get();
-
-                sqlite3_close(db);
-                return ;
-            } else {
-                std::cout << "Incorrect Password!\nPress enter to try again\n";
-                std::cin.get();
-                passwordlogin(username);
-            }
         } else {
-            identifier = sqlite3_column_int(statement, 2);
 
-            std::cout << "Login successful!\nPress enter to continue\n";
-            std::cin.get();
+            sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@password"), password.c_str(), password.size(), SQLITE_STATIC);
 
-            system("clear");
-            std::string budgetstr;
-            std::cout << "Enter your budget:\n$ ";
-            std::cin >> budgetstr;
+            if (sqlite3_step(statement) != SQLITE_ROW) {
+                failedattempts++;
 
-            char numbers[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-            int numamt = 0;
-            for (int i = 0; i < budgetstr.size(); i++) {
-                for (int j = 0; j < sizeof(numbers) / sizeof(numbers[0]); j++) {
-                    if (budgetstr[i] == numbers[j]) {
-                        numamt++;
-                        break;
-                    }
+                if (failedattempts == 3) {
+                    std::cout << "Max amount of login attempts reached!\nPress enter to exit the program\n";
+                    std::cin.get();
+
+                    sqlite3_close(db);
+                    return ;
+                } else {
+                    std::cout << "Incorrect Password!\nPress enter to try again\n";
+                    std::cin.get();
+                    passwordlogin(username);
                 }
-            }
-            if (numamt == budgetstr.size()) {
-                budget = stoi(budgetstr);
             } else {
-                std::cout << "Budget must be a numerical value\nPress enter to quit the program and try again\n";
-                std::cin.ignore();
+                identifier = sqlite3_column_int(statement, 2);
+
+                std::cout << "Login successful!\nPress enter to continue\n";
                 std::cin.get();
 
-                sqlite3_close(db);
-                return ;
-            }
+                system("clear");
+                std::string budgetstr;
+                std::cout << "Enter your budget:\n$ ";
+                std::cin >> budgetstr;
 
-            menu();
+                if (isnum(budgetstr)) {
+                    budget = stoi(budgetstr);
+                } else {
+                    std::cout << "Budget must be a numerical value\nPress enter to quit the program and try again\n";
+                    std::cin.ignore();
+                    std::cin.get();
+
+                    sqlite3_close(db);
+                    return ;
+                }
+                menu();
+            }
         }
     }
     public:
@@ -113,21 +122,21 @@ class login {
 
             system("clear");
             signup();
-        }
-
-        sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
-
-        if (sqlite3_step(statement) == SQLITE_DONE) {
-            sqlite3_reset(statement);
-            sqlite3_clear_bindings(statement);
-
-            std::cout << "User doesn't exist!\nPress enter to try again\n";
-            std::cin.get();
-            usernamelogin(false);
         } else {
-            sqlite3_reset(statement);
-            sqlite3_clear_bindings(statement);
-            passwordlogin(username);
+            sqlite3_bind_text(statement, sqlite3_bind_parameter_index(statement, "@username"), username.c_str(), username.size(), SQLITE_STATIC);
+
+            if (sqlite3_step(statement) == SQLITE_DONE) {
+                sqlite3_reset(statement);
+                sqlite3_clear_bindings(statement);
+
+                std::cout << "User doesn't exist!\nPress enter to try again\n";
+                std::cin.get();
+                usernamelogin(false);
+            } else {
+                sqlite3_reset(statement);
+                sqlite3_clear_bindings(statement);
+                passwordlogin(username);
+            }
         }
     }
 };
@@ -137,6 +146,7 @@ void signup() {
 
     std::string username;
     std::string password;
+    std::string confirm;
 
     int identifier_signup;
     int limiter = 999;
@@ -146,9 +156,38 @@ void signup() {
     std::cin.ignore();
     getline(std::cin, username);
     if (username == "e") { sqlite3_close(db); return ; }
+
+    termios def;
+    tcgetattr(0, &def);
+    termios n = def;
+    n.c_lflag &= (~ECHO);
+
     std::cout << "Enter a password:\n";
+    tcsetattr(0, TCSANOW, &n);
     getline(std::cin, password);
+    tcsetattr(0, TCSANOW, &def);
     if (password == "e") { sqlite3_close(db); return ; }
+
+    std::cout << "Repeat the password:\n";
+    tcsetattr(0, TCSANOW, &n);
+    getline(std::cin, confirm);
+    tcsetattr(0, TCSANOW, &def);
+    if (confirm == "e") { sqlite3_close(db); return ; }
+
+    while (confirm != password) {
+        system("clear");
+        std::cout << "Enter a password:\n";
+        tcsetattr(0, TCSANOW, &n);
+        getline(std::cin, password);
+        tcsetattr(0, TCSANOW, &def);
+        if (password == "e") { sqlite3_close(db); return ; }
+
+        std::cout << "Repeat the password:\n";
+        tcsetattr(0, TCSANOW, &n);
+        getline(std::cin, confirm);
+        tcsetattr(0, TCSANOW, &def);
+        if (confirm == "e") { sqlite3_close(db); return ; }
+    }
 
     identifier_signup = rand() % limiter;
     sqlite3_prepare_v2(db, "select * from users where identifier=@identifier", -1, &statement, NULL);
@@ -187,20 +226,10 @@ void signup() {
 
     system("clear");
     std::string budgetstr;
-    std::cout << "Enter your budget:\n";
+    std::cout << "Enter your budget:\n$ ";
     std::cin >> budgetstr;
 
-    char numbers[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    int numamt = 0;
-    for (int i = 0; i < budgetstr.size(); i++) {
-        for (int j = 0; j < sizeof(numbers) / sizeof(numbers[0]); j++) {
-            if (budgetstr[i] == numbers[j]) {
-                numamt++;
-                break;
-            }
-        }
-    }
-    if (numamt == budgetstr.size()) {
+    if (isnum(budgetstr)) {
         budget = stoi(budgetstr);
     } else {
         std::cout << "Budget must be a numerical value\nPress enter to quit the program and try again\n";
@@ -378,8 +407,13 @@ int menu() {
 int main() {
     system("clear");
 
+    #if !(__has_include(<termios.h>))
+        std::cout << "Your Operating System is not compatible with this Software\n";
+        return -1;
+    #endif
+
     std::string in;
-    sqlite3_open("bookstore.db", &db);
+    sqlite3_open(".bookstore.db", &db);
 
     if (sqlite3_exec(db, "select count(*) from books", 0, NULL, NULL) != SQLITE_DONE && strcmp(sqlite3_errmsg(db), "no such table: books") == 0) {
         std::cout << "The bookshop has not been fully set up yet!\nPress enter to exit the program\n";
